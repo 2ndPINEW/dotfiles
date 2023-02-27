@@ -1,0 +1,198 @@
+# Fig pre block. Keep at the top of this file.
+[[ -f "$HOME/.fig/shell/zshrc.pre.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.pre.zsh"
+
+alias code='code .'
+
+# git関連
+alias pull='git pull'
+alias st='git status'
+alias stt='git status -uno'
+# alias diff='git diff'
+# alias diffp='git diff -p'
+alias cob='git checkout -b'
+alias gc='git commit'
+
+alias merge-latest-master='git fetch . origin/master:master && git merge master'
+alias merge-latest-main='git fetch . origin/main:main && git merge main'
+
+alias ez='code ~/.zshrc'
+
+# リポジトリ管理便利にする
+# https://zenn.dev/obregonia1/articles/e82868e8f66793
+function peco-src () {
+  local selected_dir=$(ghq list -p | peco --query "$LBUFFER")
+  if [ -n "$selected_dir" ]; then
+    BUFFER="cd ${selected_dir}"
+    zle accept-line
+  fi
+  zle clear-screen
+}
+zle -N peco-src
+bindkey '^]' peco-src
+
+# ブランチ移動を便利にする
+function gch () {
+  local selected_branch=$(git branch -a | peco --query "$LBUFFER")
+  local selected_branch_local=$(echo ${selected_branch} | sed -e 's/remotes\/origin\///g')
+  if [ $selected_branch != $selected_branch_local ];then
+    if [ -n "$selected_branch_local" ]; then
+      BUFFER="git checkout ${selected_branch_local}"
+      zle accept-line
+    fi
+  else
+    if [ -n "$selected_branch" ]; then
+      BUFFER="git checkout ${selected_branch}"
+      zle accept-line
+    fi
+  fi
+  zle clear-screen
+}
+zle -N gch
+bindkey '^[' gch
+
+# マスターに間違ってプッシュしないように
+function gp () {
+  local current_branch=$(git symbolic-ref --short HEAD)
+  if [ $current_branch = "master" ]; then
+    echo "masterだけど大丈夫そ？"
+  elif [ $current_branch = "main" ]; then
+    echo "mainだけど大丈夫そ？"
+  else
+    git push
+  fi
+}
+
+# マスターに間違ってプッシュしないように
+function ti () {
+  local current_branch=$(git symbolic-ref --short HEAD)
+  if [ $current_branch = "master" ]; then
+    echo "masterだけど大丈夫そ？"
+  elif [ $current_branch = "main" ]; then
+    echo "mainだけど大丈夫そ？"
+  else
+    tig
+  fi
+}
+
+function reload-sh () {
+  . ~/.zshrc
+}
+zle -N reload-sh
+bindkey '^r' reload-sh
+
+# 選択中のブランチのアップストリームをoriginの同名ブランチにする
+function gus () {
+  local current_branch=$(git symbolic-ref --short HEAD)
+  git branch --set-upstream-to=origin/$current_branch $current_branch
+}
+
+function compare-dist () {
+  local default_branch=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+  local current_branch_hash=$(git show --format='%H' --no-patch)
+  local master_branch_hash=$(git show-branch --merge-base origin/$default_branch HEAD)
+  echo "bin/compare-dist $@ $current_branch_hash $master_branch_hash"
+  bin/compare-dist $@ $current_branch_hash $master_branch_hash
+}
+
+export GOPATH=$HOME
+export PATH=$PATH:$GOPATH/bin
+export PATH="/Users/takase/.deno/bin:$PATH"
+export PATH="/Users/takase/.cargo/bin:$PATH"
+
+# pnpm
+export PNPM_HOME="/Users/takase/Library/pnpm"
+export PATH="$PNPM_HOME:$PATH"
+# pnpm end
+
+# starchip
+eval "$(starship init zsh)"
+eval "$(nodenv init -)"
+
+source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# Fig post block. Keep at the bottom of this file.
+[[ -f "$HOME/.fig/shell/zshrc.post.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.post.zsh"
+
+# echo "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡾⢺⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣤⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⠀⠀⢠⠀⠠⢖⣢⠤⡀⠀⠀⡀⠹⠏⠛⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣾⣿⣿⣿⣿⣿⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⢠⠶⠚⣇⡄⠉⠀⢀⡇⠁⠃⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⠀⠐⠋⠹⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⡿⠿⠛⠛⠛⠻⠿⢿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣿⡟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠉⠻⣿⣿⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⡿⠁⠀⠀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⠃⠀⠀⣀⣀⠀⠀⠀⠀⠀⠐⠒⠀⠄⢸⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⠀⠀⠉⠉⠛⠀⠀⠀⠀⠐⢶⡦⠄⠀⢸⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠋⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠀"
+# echo "⠀⣀⠤⠞⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⡄⠀⡀⠸⣽⠆⠀⠀⠀"
+# echo "⣯⣀⡀⢀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡀⠀⣀⣀⣀⡀⠀⠀⠀⠀⠀⠲⣖⠒⠒⠠⠠⣤⠄⠀⠀⠀⠠⠖⢋⡏⠀⢠⠟⡄⠀⠀⠀⠀⠀"
+# echo "⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⡀⠀⠀⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡸⠀⣠⠋⠀⠈⠀⠀⠀⠀⠀"
+# echo "⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⠛⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⠚⠁⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠀⠀⠉⠛⠀⠀⠀⠀⠠⢸⣦⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⣿⣷⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡀⠀⠀⠀⠀⠀⠀⠀⣠⣿⣿⣿⣿⣿⣿⣷⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀"
+# echo "⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣄⣤⣤⣤⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀"
+# echo "⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⠀"
+# echo "⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀"
+# echo "⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀"
+# echo "⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀"
+# echo "⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄"
+
+
+
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠤⠄⠐⠒⠒⠂⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠐⠂⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡠⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠀⠡⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠖⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣯⣽⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⢀⡀⢠⠄⠀⠀⢸⣿⣿⢃⣤⣦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⣿⣿⡆⠛⠟⠃⢀⣴⣶⣿⣿⣷⣶⡄⠈⠉⠃⠸⣿⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠛⠛⠁⠀⠀⠀⠀⠛⠿⠿⠿⠟⠛⠁⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠤⢦⡀⠀⠀⠀
+# echo ⠀⠀⢀⣀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠄⠀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⡀⠤⠤⠤⠴⠖⠒⠚⠉⠁⠀⠀⣀⠤⠐⠒⠈⠠⠤⠚⠁⣀⠀⠀
+# echo ⠀⠀⠘⣢⣄⠈⠉⠉⠉⠒⠢⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣶⣷⣦⡄⠀⠀⠀⠀⠀⠀⠀⠀⡖⠒⣶⠁⠀⠀⠀⠀⠀⢐⡒⠲⠦⢽⡀
+# echo ⢠⣖⣩⠥⠶⣂⡀⠀⠀⠀⠀⢸⣿⡇⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⣇⠠⠿⢇⠀⠀⠀⠀⠶⠿⠭⣝⠲⣤⠞
+# echo ⢰⣁⡤⢖⣻⠥⠴⠀⠀⠀⢀⠜⠉⠁⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⠒⠂⠉⠉⠑⠢⠞⠉⠁⠀
+# echo ⠀⠘⠓⠺⠤⠒⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⢀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡄⠛⣀⠀⡄⢁⡘⠃⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⠄⠠⠄⠉⡄⢀⡌⠁⡤⠀⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠰⠀⠶⠀⠦⠠⠄⠠⠄⢠⠀⠤⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠰⠆⠰⠆⠐⠂⠐⠂⠀⠆⠀⠆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠃⣀⠁⠐⠂⠘⢁⠐⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠘⠃⠘⠃⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠶⠷⠶⠦⠶⠶⠆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⠴⠆⠀⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠄⠀⠀⣀⡀⠀⠀⠤⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+
+
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⠤⠤⠤⠤⢤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡴⠛⠁⠀⠀⠀⠀⠀⠀⠀⠉⠙⠳⢤⣀⠀⠀⠀⠀⠀⠀⠀⢀⡾⡇⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠳⣄⠀⠀⠀⣀⡴⠋⣼⠁⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡼⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⣄⠀⠀⠀⠀⠀⠈⢥⠶⠋⠁⣠⠞⠁⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⠃⠀⠀⠀⠀⢠⣾⣦⠀⠀⠀⠘⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⡴⠛⠁⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⢠⡏⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠙⠛⢀⠀⠀⠀⠀⠀⠀⠀⠠⡄⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⣸⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⣀⣤⠞⠁⠀⠀⠀⠀⠀⠀⠀⠹⣆⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⢀⣠⡤⠤⠶⠒⠃⠀⠀⠀⠀⠀⠀⠈⠛⠛⠛⠛⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣆⠀⠀⠀⠀
+# echo ⠀⣠⣞⣭⡤⠤⠤⢤⣤⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣆⠀⠀⠀
+# echo ⠘⠋⠁⠀⠀⠀⠀⠀⣶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⡄⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠞⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣤⡤⠴⠖⠛⠉⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⢠⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠴⠚⠋⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⣠⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⢀⡞⠁⠀⣀⣤⠴⠖⠲⠶⠦⠤⠤⠴⠖⠚⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+# echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+
+echo ⠀⣀⣠⣄⡀⠀⠀⠀⠀⣴⢦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣄⡀⠀⠀⠀⠀⣴⢦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+echo ⣾⣿⡅⠈⣷⠀⠀⠀⣼⠃⠈⠻⢧⣤⠤⣤⣤⣤⣄⣀⢀⣀⣤⡴⢶⡾⠛⠛⢶⡄⣾⣿⡅⠈⣷⠀⠀⠀⣼⠃⠈⠻⢧⣤⠤⣤⣤⣤⣄⣀⢀⣀⣤⡴⢶⡾⠛⠛⢶⡄
+echo ⢹⡟⠃⠀⢹⡆⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠀⢀⠜⠁⠀⠀⣰⠇⢹⡟⠃⠀⢹⡆⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠀⢀⠜⠁⠀⠀⣰⠇
+echo ⠘⣧⠀⠀⠈⣧⣀⡞⠁⣄⣠⣼⠀⠀⠀⠀⠀⡄⢐⣆⠀⠀⡠⠂⠀⠀⢀⡼⠃⠀⠘⣧⠀⠀⠈⣧⣀⡞⠁⣄⣠⣼⠀⠀⠀⠀⠀⡄⢐⣆⠀⠀⡠⠂⠀⠀⢀⡼⠃⠀
+echo ⠀⢻⡀⠀⠀⢹⡿⠀⠀⠻⠉⠈⠀⠤⠀⠀⠘⠿⠟⠙⢀⠔⠀⠀⠀⢠⣾⣥⣤⡀⠀⢻⡀⠀⠀⢹⡿⠀⠀⠻⠉⠈⠀⠤⠀⠀⠘⠿⠟⠙⢀⠔⠀⠀⠀⢠⣾⣥⣤⡀
+echo ⠀⠸⡇⠀⠀⠘⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡠⠉⠀⠀⠀⣰⣿⣿⣅⣨⣿⠀⠸⡇⠀⠀⠘⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡠⠉⠀⠀⠀⣰⣿⣿⣅⣨⣿
+echo ⠀⠀⣿⠀⠀⠀⠣⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠀⠀⠀⢀⡜⠀⣿⣿⣉⣉⣿⠀⠀⣿⠀⠀⠀⠣⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠀⠀⠀⢀⡜⠀⣿⣿⣉⣉⣿
+echo ⠀⠀⣿⡀⠀⠀⠀⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡔⠠⣠⠼⠃⢸⣿⣏⠛⣻⠇⠀⠀⣿⡀⠀⠀⠀⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡔⠠⣠⠼⠃⢸⣿⣏⠛⣻⠇
+echo ⠀⠀⠈⣧⠀⠀⠀⢣⠁⠀⠀⠀⠀⠀⠀⠀⠂⠀⢘⠀⠀⠘⠀⡠⠊⣹⣙⣿⠏⠀⠀⠀⠈⣧⠀⠀⠀⢣⠁⠀⠀⠀⠀⠀⠀⠀⠂⠀⢘⠀⠀⠘⠀⡠⠊⣹⣙⣿⠏⠀
+echo ⠀⠀⠀⢸⡀⠀⠀⢸⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠛⠀⠀⠀⠀⠚⣹⣿⡁⠀⠀⠀⠀⠀⢸⡀⠀⠀⢸⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠛⠀⠀⠀⠀⠚⣹⣿⡁⠀⠀
+echo ⠀⠀⠀⠈⠓⠒⠚⠛⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠋⣻⠄⠀⠀⠀⠀⠈⠓⠒⠚⠛⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠋⣻⠄⠀
+echo ⠀⠀⠀⠀⠀⠀⠀⠀⢻⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠌⣰⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠌⣰⠟⠀⠀
+echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡴⠛⠛⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡴⠛⠛⠋⠀⠀⠀
+echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠓⠶⢤⡀⠀⠀⠀⣰⡖⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠓⠶⢤⡀⠀⠀⠀⣰⡖⠋⠁⠀⠀⠀⠀⠀⠀⠀
+echo ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⠶⠶⠞⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⠶⠶⠞⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
